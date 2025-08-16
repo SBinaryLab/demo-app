@@ -3,7 +3,7 @@ name: Build and Deploy with BuildKit
 on:
   push:
     branches:
-      - main
+      - devops
 
 env:
   DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_USERNAME }}
