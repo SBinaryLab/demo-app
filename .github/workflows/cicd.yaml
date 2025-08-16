@@ -15,8 +15,8 @@ env:
   DOCKERFILE: ${{ secrets.DOCKERFILE }}
 
 jobs:
-  build-push-deploy:
-    name: Build, Push, and Deploy with BuildKit
+  Git-Checkout:
+    name: Checkout Stage
     runs-on: ubuntu-latest
 
     permissions:
