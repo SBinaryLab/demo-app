@@ -1,2 +1,2 @@
 # demo-app
-for job opportunity
+for Demostration demo app
