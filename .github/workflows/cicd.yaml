@@ -13,3 +13,18 @@ env:
   IMAGE_NAME_GHCR: ghcr.io/${{ github.repository }}/demo-app
   IMAGE_NAME_GITLAB: registry.gitlab.com/${{ github.repository }}/demo-app
   DOCKERFILE: ${{ secrets.DOCKERFILE }}
+
+jobs:
+  build-push-deploy:
+    name: Build, Push, and Deploy with BuildKit
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
