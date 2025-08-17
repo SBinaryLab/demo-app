@@ -71,7 +71,7 @@ jobs:
                    --security-opt seccomp=unconfined \
                    --security-opt apparmor=unconfined \
                    -v $HOME/.docker:/root/.docker \# mount Docker credentials
-                   -v ${{ github.workspace }}/repo:/repo --rm
+                   -v ${{ github.workspace }}/repo:/repo
           run: |
             cd ./repo
 
