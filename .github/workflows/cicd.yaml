@@ -12,11 +12,10 @@ env:
   IMAGE_NAME_DOCKER: ${{ secrets.DOCKER_USERNAME }}/demo-app
   IMAGE_NAME_GHCR: ghcr.io/${{ github.repository }}/demo-app
   IMAGE_NAME_GITLAB: registry.gitlab.com/${{ github.repository }}/demo-app
-  DOCKERFILE: ${{ secrets.DOCKERFILE }}
 
 jobs:
-  Git-Checkout:
-    name: Checkout Stage
+  build-push-deploy:
+    name: Build, Push, and Deploy with BuildKit
     runs-on: ubuntu-latest
 
     permissions:
@@ -28,3 +27,88 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx with Rootless
+        uses: docker/setup-buildx-action@v3
+        with:
+          version: latest
+          buildkitd-flags: --allow-insecure-entitlement security.insecure --rootless
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # - name: Login to GitHub Container Registry
+      #   uses: docker/login-action@v3
+      #   with:
+      #     registry: ${{ env.REGISTRY_GHCR }}
+      #     username: ${{ secrets.GITHUB_USERNAME }}
+      #     password: ${{ secrets.GHCR_TOKEN }}
+
+      # - name: Login to GitLab Container Registry
+      #   uses: docker/login-action@v3
+      #   with:
+      #     registry: ${{ env.REGISTRY_GITLAB }}
+      #     username: ${{ secrets.GITLAB_USERNAME }}
+      #     password: ${{ secrets.GITLAB_TOKEN }}
+
+      - name: Write Dockerfile from Secret
+        run: |
+          echo "${{ secrets.DOCKERFILE_CONTENT }}" > Dockerfile
+
+      - name: Build and push image to Docker Hub with BuildKit
+        run: |
+          docker buildx build \
+            --platform linux/amd64 \
+            --tag ${{ env.IMAGE_NAME_DOCKER }}:${{ github.sha }} \
+            --tag ${{ env.IMAGE_NAME_DOCKER }}:latest \
+            --push \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            --security-opt seccomp=unconfined \
+            .
+
+      # - name: Build and push image to GHCR with BuildKit
+      #   run: |
+      #     docker buildx build \
+      #       --platform linux/amd64 \
+      #       --tag ${{ env.IMAGE_NAME_GHCR }}:${{ github.sha }} \
+      #       --tag ${{ env.IMAGE_NAME_GHCR }}:latest \
+      #       --push \
+      #       --build-arg BUILDKIT_INLINE_CACHE=1 \
+      #       --security-opt seccomp=unconfined \
+      #       .
+
+      # - name: Build and push image to GitLab CR with BuildKit
+      #   run: |
+      #     docker buildx build \
+      #       --platform linux/amd64 \
+      #       --tag ${{ env.IMAGE_NAME_GITLAB }}:${{ github.sha }} \
+      #       --tag ${{ env.IMAGE_NAME_GITLAB }}:latest \
+      #       --push \
+      #       --build-arg BUILDKIT_INLINE_CACHE=1 \
+      #       --security-opt seccomp=unconfined \
+            .
+
+      - name: Test the image
+        run: |
+          docker run --rm -p 8080:8080 ${{ env.IMAGE_NAME_DOCKER }}:${{ github.sha }} && \
+          curl -f http://localhost:8080/
+        continue-on-error: true
+      
+      # - name: Setup kubectl
+      #   uses: azure/setup-kubectl@v3
+      # - name: Deploy to Kubernetes
+      #   env:
+      #     KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+      #     NAMESPACE: ${{ secrets.NAMESPACE }}
+      #   run: |
+      #     mkdir -p ~/.kube
+      #     echo "$KUBE_CONFIG" | base64 -d > ~/.kube/config
+      #     # Update deployment YAML with the latest Docker Hub image
+      #     sed -i "s|image: .*|image: ${{ env.IMAGE_NAME_DOCKER }}:${{ github.sha }}|" k8s/deployment.yaml
+      #     kubectl apply -f k8s/deployment.yaml -n "$NAMESPACE"
+      #     kubectl apply -f k8s/service.yaml -n "$NAMESPACE"
+      #     kubectl rollout status deployment/my-spring-app -n "$NAMESPACE"
+      #   working-directory: ./k8s
