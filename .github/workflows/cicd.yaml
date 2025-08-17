@@ -84,7 +84,9 @@ jobs:
         run: mkdir -p k8s
 
       - name: Create deployment.yaml from secret
-        run: echo "${{ secrets.DEPLOYMENT_FILE }}" | base64 -d > k8s/deployment.yaml
+        run: |
+          echo "${{ secrets.DEPLOYMENT_FILE }}" | base64 -d > k8s/deployment.yaml
+          sed -i "s|IMG_PLACEHOLDER|${{ env.IMAGE_NAME_DOCKER }}:${{ env.IMAGE_TAG }}|g" k8s/deployment.yaml
 
       - name: Create service.yaml from secret
         run: echo "${{ secrets.SERVICE_FILE }}" | base64 -d > k8s/service.yaml
