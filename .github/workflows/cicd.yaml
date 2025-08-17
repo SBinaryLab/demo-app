@@ -69,7 +69,7 @@ jobs:
           push: true
           tags: ${{ env.IMAGE_NAME_DOCKER }} 
           cache-from: type=registry,ref=${{ env.IMAGE_NAME_DOCKER }}
-          cache-to: type=registry,ref=${{ env.IMAGE_NAME_DOCKER }},mode=max
+          cache-to: type=inline 
 
       # # 9️⃣ Optional: Deploy to Kubernetes
       # - name: Deploy to Kubernetes
