@@ -13,36 +13,61 @@ env:
   # IMAGE_NAME_GHCR: ghcr.io/${{ github.repository }}/demo-app
   # IMAGE_NAME_GITLAB: registry.gitlab.com/${{ github.repository }}/demo-app
 
-jobs:
-  build-push-deploy:
-    runs-on: ubuntu-latest
-    container:
-      image: moby/buildkit:rootless
-      options: --security-opt seccomp=unconfined --security-opt apparmor=unconfined
 
+jobs:
+  checkout:
+    runs-on: ubuntu-latest
+    outputs:
+      repo-path: ${{ steps.upload-artifact.outputs.repo-path }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
+      - name: Upload repository as artifact
+        uses: actions/upload-artifact@v3
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          name: repo
+          path: .
 
-      - name: Write Dockerfile from Secret
-        run: |
-          echo "${{ secrets.DOCKERFILE_DEMO_APP }}" > Dockerfile
+  build-push:
+    runs-on: ubuntu-latest
+    needs: checkout
+    steps:
+      - name: Download repository artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: repo
+          path: ./repo
 
       - name: Build and Push Images
-        run: |
-          buildctl build \
-            --frontend dockerfile.v0 \
-            --local context=. \
-            --local dockerfile=. \
-            --output type=image,name=${{ env.IMAGE_NAME_DOCKER }}:latest,push=true \
-            --output type=image,name=${{ env.IMAGE_NAME_GHCR }}:latest,push=true \
-            --output type=image,name=${{ env.IMAGE_NAME_GITLAB }}:latest,push=true
+        uses: addnab/docker-run-action@v4
+        with:
+          image: moby/buildkit:rootless
+          options: --rm --security-opt seccomp=unconfined --security-opt apparmor=unconfined
+          run: |
+            cd ./repo
+            echo "${{ secrets.DOCKERFILE_DEMO_APP }}" > Dockerfile
+
+            buildctl login docker.io \
+              --username "${{ secrets.DOCKER_USERNAME }}" \
+              --password "${{ secrets.DOCKER_PASSWORD }}"
+
+            # buildctl login ghcr.io \
+            #   --username "${{ github.actor }}" \
+            #   --password "${{ secrets.GITHUB_TOKEN }}"
+
+            # buildctl login registry.gitlab.com \
+            #   --username "${{ secrets.GITLAB_USER }}" \
+            #   --password "${{ secrets.GITLAB_TOKEN }}"
+
+            buildctl build \
+              --frontend dockerfile.v0 \
+              --local context=. \
+              --local dockerfile=. \
+              --output type=image,name=${{ secrets.DOCKER_USERNAME }}/demo-app:latest,push=true 
+              # --output type=image,name=ghcr.io/${{ github.repository }}/demo-app:latest,push=true \
+              # --output type=image,name=registry.gitlab.com/${{ github.repository }}/demo-app:latest,push=true
+
 
       # - name: Set up Docker Buildx
       #   uses: docker/setup-buildx-action@v3
