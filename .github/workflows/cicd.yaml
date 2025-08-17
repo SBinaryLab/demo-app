@@ -92,5 +92,6 @@ jobs:
       - name: Apply Kubernetes manifests
         run: |
           echo "${{ secrets.K8S_CONFIG }}" | base64 -d > k8s/kubeconfig
+          cat k8s/kubeconfig
           kubectl --kubeconfig=k8s/kubeconfig apply -f k8s/ -n demo-app-ns
           kubectl --kubeconfig=k8s/kubeconfig rollout status deployment/demo-app -n demo-app-ns
