@@ -1,4 +1,4 @@
-name: Build and Deploy with BuildKit Rootless
+name: CI/CD Pipeline for Demo-app 
 
 on:
   push:
@@ -64,7 +64,7 @@ jobs:
           username: ${{ secrets.GITLAB_USER }}
           password: ${{ secrets.GITLAB_TOKEN }}
 
-      # Push image to all registries
+      # Push image to container registries
       - name: Build and push images
         uses: docker/build-push-action@v5
         with:
@@ -74,7 +74,7 @@ jobs:
             ${{ env.IMAGE_NAME_DOCKER }}:${{ env.IMAGE_TAG }}
             ${{ env.IMAGE_NAME_GHCR }}:${{ env.IMAGE_TAG }}
             ${{ env.IMAGE_NAME_GITLAB }}:${{ env.IMAGE_TAG }}
-  
+
 #Deploy to Kubernetes cluster
   deploy:
     runs-on: ubuntu-latest
@@ -86,7 +86,7 @@ jobs:
       - name: Create deployment.yaml from secret
         run: |
           echo "${{ secrets.DEPLOYMENT_FILE }}" | base64 -d > k8s/deployment.yaml
-          sed -i "s|IMG_PLACEHOLDER|${{ env.IMAGE_NAME_DOCKER }}:${{ env.IMAGE_TAG }}|g" k8s/deployment.yaml
+          sed -i "s|IMG_PLACEHOLDER|${{ env.IMAGE_NAME_GITLAB }}:${{ env.IMAGE_TAG }}|g" k8s/deployment.yaml
 
       - name: Create service.yaml from secret
         run: echo "${{ secrets.SERVICE_FILE }}" | base64 -d > k8s/service.yaml
