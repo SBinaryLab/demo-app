@@ -69,7 +69,7 @@ jobs:
           image: moby/buildkit:rootless
           options: >
                    --rm
-                   -v $HOME/.docker:/root/.docker 
+                   -v /home/runner/.docker:/root/.docker
                    -v ${{ github.workspace }}/repo:/repo
           run: |
             cd ./repo
