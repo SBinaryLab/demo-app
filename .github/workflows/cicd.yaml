@@ -18,10 +18,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Write Dockerfile from secret
-      - name: Create Dockerfile
-        run: |
-          echo "${{ secrets.DOCKERFILE_DEMO_APP }}" > Dockerfile
+      # # 2️⃣ Write Dockerfile from secret
+      # - name: Create Dockerfile
+      #   run: |
+      #     echo "${{ secrets.DOCKERFILE_DEMO_APP }}" > Dockerfile
 
       # 3️⃣ Set up Buildx (rootless BuildKit)
       - name: Set up Docker Buildx
@@ -69,8 +69,8 @@ jobs:
           context: .
           push: true
           tags: ${{ env.IMAGE_NAME_DOCKER }} 
-          cache-from: type=registry,ref=${{ env.IMAGE_NAME_DOCKER }}
-          cache-to: type=inline 
+          # cache-from: type=registry,ref=${{ env.IMAGE_NAME_DOCKER }}
+          # cache-to: type=inline 
 
       # # 9️⃣ Optional: Deploy to Kubernetes
       # - name: Deploy to Kubernetes
