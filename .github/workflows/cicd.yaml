@@ -18,11 +18,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Write Dockerfile from secret
-      - name: Create Dockerfile
-        run: |
-          printf "%s\n" "${{ secrets.DOCKERFILE_DEMO_APP }}" | tee Dockerfile
-          
+      # # 2️⃣ Write Dockerfile from secret
+      # - name: Create Dockerfile
+      #   run: |
+      #     printf "%s\n" "${{ secrets.DOCKERFILE_DEMO_APP }}" | tee Dockerfile
+
       # 3️⃣ Set up Buildx (rootless BuildKit)
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
