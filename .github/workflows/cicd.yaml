@@ -35,7 +35,7 @@ jobs:
         run: echo "${{ secrets.DOCKERFILE_DEMO_APP }}" | base64 -d > Dockerfile
 
       # Set up Buildx (rootless BuildKit)
-      - name: Set up Docker Buildx
+      - name: Configure Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
           install: true

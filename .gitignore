@@ -1,0 +1,59 @@
+# .gitignore for Spring Boot + Docker
+
+# Java / Spring Boot
+*.class
+*.log
+*.jar
+*.war
+*.ear
+target/
+*.iml
+.idea/
+*.classpath
+*.project
+*.settings/
+.DS_Store
+
+# Maven
+.mvn/
+target/
+*.jar
+*.war
+*.ear
+
+# Gradle (if applicable)
+.gradle/
+build/
+!gradle-wrapper.jar
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+out/
+
+# Eclipse IDE
+.project
+.classpath
+.settings/
+bin/
+
+# VSCode
+.vscode/
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile  
+.dockerignore
+
+# Java build directories
+*.log
+*.class
+*.jar
+target/
+
+# Maven local repository
+/.m2/
