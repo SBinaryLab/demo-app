@@ -40,6 +40,8 @@ jobs:
         with:
           name: repo
           path: ./repo
+          run: |
+            echo "${{ secrets.DOCKERFILE_DEMO_APP }}" > ./repo/Dockerfile
 
       - name: Build and Push Images using BuildKit rootless
         uses: addnab/docker-run-action@v3
@@ -49,8 +51,6 @@ jobs:
           run: |
             cd /repo
 
-            echo "${{ secrets.DOCKERFILE_DEMO_APP }}" > Dockerfile
-            
             # Start BuildKit rootless daemon
             buildkitd --rootless &
             sleep 3
