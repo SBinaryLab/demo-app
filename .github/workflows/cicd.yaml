@@ -40,8 +40,10 @@ jobs:
         with:
           name: repo
           path: ./repo
-          run: |
-            echo "${{ secrets.DOCKERFILE_DEMO_APP }}" > ./repo/Dockerfile
+
+      - name: Write Dockerfile from secret
+        run: |
+          echo "${{ secrets.DOCKERFILE_DEMO_APP }}" > ./repo/Dockerfile
 
       - name: Build and Push Images using BuildKit rootless
         uses: addnab/docker-run-action@v3
@@ -53,16 +55,22 @@ jobs:
 
             # Start BuildKit rootless daemon
             buildkitd --rootless &
-            sleep 3
+            sleep 5
 
             # Docker Hub login
-            buildctl login docker.io --username "${DOCKER_HUB_USERNAME}" --password "${DOCKER_HUB_PASSWORD}"
+            buildctl login docker.io \
+              --username "${DOCKER_HUB_USERNAME}" \
+              --password "${DOCKER_HUB_PASSWORD}"
 
-            # # GHCR login
-            # buildctl login ghcr.io --username "${{ github.actor }}" --password "${REGISTRY_GHCR_TOKEN}"
+            # Uncomment to login and push to GHCR
+            # buildctl login ghcr.io \
+            #   --username "${{ github.actor }}" \
+            #   --password "${REGISTRY_GHCR_TOKEN}"
 
-            # # GitLab login
-            # buildctl login registry.gitlab.com --username "${{ github.actor }}" --password "${REGISTRY_GITLAB_TOKEN}"
+            # Uncomment to login and push to GitLab CR
+            # buildctl login registry.gitlab.com \
+            #   --username "${{ github.actor }}" \
+            #   --password "${REGISTRY_GITLAB_TOKEN}"
 
             # Build and push Docker Hub image
             buildctl build \
@@ -71,14 +79,14 @@ jobs:
               --local dockerfile=. \
               --output type=image,name=${IMAGE_NAME_DOCKER}:latest,push=true
 
-            # # Build and push GHCR image
+            # Uncomment to build & push GHCR image
             # buildctl build \
             #   --frontend dockerfile.v0 \
             #   --local context=. \
             #   --local dockerfile=. \
             #   --output type=image,name=${IMAGE_NAME_GHCR}:latest,push=true
 
-            # # Build and push GitLab CR image
+            # Uncomment to build & push GitLab image
             # buildctl build \
             #   --frontend dockerfile.v0 \
             #   --local context=. \
