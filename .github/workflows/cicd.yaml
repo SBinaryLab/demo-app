@@ -26,15 +26,15 @@ jobs:
     outputs:
       image_digest: ${{ steps.build.outputs.digest }}
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.checkout.outputs.ref }}
+      # - uses: actions/checkout@v4
+      #   with:
+      #     ref: ${{ needs.checkout.outputs.ref }}
 
-      # 2️⃣ Write Dockerfile from secret
+      # Write Dockerfile from secret
       - name: Create Dockerfile
         run: echo "${{ secrets.DOCKERFILE_DEMO_APP }}" | base64 -d > Dockerfile
 
-      # 3️⃣ Set up Buildx (rootless BuildKit)
+      # Set up Buildx (rootless BuildKit)
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
@@ -75,12 +75,12 @@ jobs:
             ${{ env.IMAGE_NAME_GHCR }}:${{ env.IMAGE_TAG }}
             ${{ env.IMAGE_NAME_GITLAB }}:${{ env.IMAGE_TAG }}
   
-      # # 9️⃣ Optional: Deploy to Kubernetes
-      # - name: Deploy to Kubernetes
-      #   uses: azure/k8s-deploy@v4
-      #   with:
-      #     manifests: ./k8s/deployment.yaml
-      #     images: |
-      #       ${{ env.IMAGE_NAME_DOCKER }}
-      #       ${{ env.IMAGE_NAME_GHCR }}
-      #       ${{ env.IMAGE_NAME_GITLAB }}
+      # Deploy to Kubernetes cluster
+      - name: Deploy to Kubernetes
+        uses: azure/k8s-deploy@v4
+        with:
+          manifests: ./k8s/deployment.yaml
+          images: |
+            ${{ env.IMAGE_NAME_DOCKER }}
+            ${{ env.IMAGE_NAME_GHCR }}
+            ${{ env.IMAGE_NAME_GITLAB }}
