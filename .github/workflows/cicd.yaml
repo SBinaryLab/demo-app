@@ -6,79 +6,77 @@ on:
       - devops
 
 env:
-  IMAGE_NAME_DOCKER: ${{ secrets.DOCKER_USERNAME }}/demo-app
-  IMAGE_NAME_GHCR: ghcr.io/${{ github.repository }}/demo-app
-  IMAGE_NAME_GITLAB: registry.gitlab.com/${{ github.repository }}/demo-app
+  IMAGE_NAME_DOCKER: ${{ secrets.DOCKER_USERNAME }}/demo-app:latest
+  IMAGE_NAME_GHCR: ghcr.io/${{ github.repository }}:latest
+  IMAGE_NAME_GITLAB: registry.gitlab.com/${{ github.repository }}:latest
 
 jobs:
-  checkout:
+  build-and-push:
     runs-on: ubuntu-latest
     steps:
+      # 1️⃣ Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Upload repo as artifact for next job
-      - name: Upload repository as artifact
-        uses: actions/upload-artifact@v4
+      # 2️⃣ Write Dockerfile from secret
+      - name: Create Dockerfile
+        run: echo "${{ secrets.DOCKERFILE_DEMO_APP }}" > Dockerfile
+
+      # 3️⃣ Set up Buildx (rootless BuildKit)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
         with:
-          name: repo
-          path: .
+          driver-opts: image=moby/buildkit:rootless
 
-  build-push:
-    runs-on: ubuntu-latest
-    needs: checkout
-    steps:
-      # 1️⃣ Download repo artifact
-      - name: Download repository artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: repo
-          path: ./repo
+      # 4️⃣ Verify BuildKit rootless driver
+      - name: Verify BuildKit Rootless
+        run: |
+          echo "=== Buildx info ==="
+          docker buildx ls
+          echo "=== Buildx inspect ==="
+          docker buildx inspect
+          echo "=== BuildKit workers ==="
+          buildctl debug workers || echo "buildctl not installed, skipping"
 
-      # 0️⃣ Write Dockerfile before BuildKit
-      - name: Write Dockerfile from Secret
-        run: echo "${{ secrets.DOCKERFILE_DEMO_APP }}" > ./repo/Dockerfile
-
-      # 2️⃣ Login to Docker Hub
-      - name: Docker Hub Login
+      # 5️⃣ Log in to Docker Hub
+      - name: Docker Hub login
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # # 3️⃣ Login to GitHub Container Registry
-      # - name: GHCR Login
-      #   uses: docker/login-action@v3
-      #   with:
-      #     registry: ghcr.io
-      #     username: ${{ github.actor }}
-      #     password: ${{ secrets.GITHUB_TOKEN }}
-
-      # # 4️⃣ Login to GitLab Registry
-      # - name: GitLab Login
-      #   uses: docker/login-action@v3
-      #   with:
-      #     registry: registry.gitlab.com
-      #     username: ${{ secrets.GITLAB_USER }}
-      #     password: ${{ secrets.GITLAB_TOKEN }}
-
-      # 5️⃣ Build and Push Images in rootless BuildKit container
-      - name: Build and Push Images
-        uses: addnab/docker-run-action@v3
+      # 6️⃣ Log in to GHCR
+      - name: GHCR login
+        uses: docker/login-action@v3
         with:
-          image: moby/buildkit:rootless
-          options: >
-                   --rm
-                   -v /home/runner/.docker:/root/.docker
-                   -v ${{ github.workspace }}/repo:/repo
-          run: |
-            cd ./repo
-            # Build and push images to all registries
-            buildctl build \
-              --frontend dockerfile.v0 \
-              --local context=. \
-              --local dockerfile=. \
-              --output type=image,name=${IMAGE_NAME_DOCKER}:latest,push=true
-              # --output type=image,name=${IMAGE_NAME_GHCR}:latest,push=true \
-              # --output type=image,name=${IMAGE_NAME_GITLAB}:latest,push=true
-          shell: sh
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # 7️⃣ Log in to GitLab Registry
+      - name: GitLab login
+        uses: docker/login-action@v3
+        with:
+          registry: registry.gitlab.com
+          username: ${{ secrets.GITLAB_USER }}
+          password: ${{ secrets.GITLAB_TOKEN }}
+
+      # 8️⃣ Build and push image to all registries
+      - name: Build and push images
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ env.IMAGE_NAME_DOCKER }},${{ env.IMAGE_NAME_GHCR }},${{ env.IMAGE_NAME_GITLAB }}
+          cache-from: type=registry,ref=${{ env.IMAGE_NAME_DOCKER }}
+          cache-to: type=registry,ref=${{ env.IMAGE_NAME_DOCKER }},mode=max
+
+      # # 9️⃣ Optional: Deploy to Kubernetes
+      # - name: Deploy to Kubernetes
+      #   uses: azure/k8s-deploy@v4
+      #   with:
+      #     manifests: ./k8s/deployment.yaml
+      #     images: |
+      #       ${{ env.IMAGE_NAME_DOCKER }}
+      #       ${{ env.IMAGE_NAME_GHCR }}
+      #       ${{ env.IMAGE_NAME_GITLAB }}
