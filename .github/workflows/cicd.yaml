@@ -70,9 +70,6 @@ jobs:
         with:
           context: .
           push: true
-          build-args: |
-            MAVEN_OPTS=-DskipTests
-          progress: plain
           tags: |
             ${{ env.IMAGE_NAME_DOCKER }}:${{ env.IMAGE_TAG }}
             ${{ env.IMAGE_NAME_GHCR }}:${{ env.IMAGE_TAG }}
