@@ -7,7 +7,7 @@ on:
 
 env:
   IMAGE_NAME_DOCKER: ${{ secrets.DOCKER_USERNAME }}/demo-app
-  IMAGE_NAME_GHCR: ghcr.io/${{ github.repository }}
+  IMAGE_NAME_GHCR: ${{ vars.GHCR_REGISTRY}}
   IMAGE_NAME_GITLAB: ${{ vars.GITLAB_REGISTRY }}
   IMAGE_TAG: ${{ github.sha }}
 
