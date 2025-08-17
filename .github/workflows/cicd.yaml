@@ -94,4 +94,4 @@ jobs:
           KUBECONFIG: ${{ secrets.K8S_CONFIG }}
         run: |
           kubectl apply -f k8s/ -n demo-app-ns
-          kubectl rollout status deployment/demo-app
+          kubectl rollout status deployment/demo-app -n demo-app-ns
