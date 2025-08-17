@@ -67,14 +67,14 @@ jobs:
         uses: addnab/docker-run-action@v3
         with:
           image: moby/buildkit:rootless
-          options: --rm \
+          options: >
+                   --rm \
                    --security-opt seccomp=unconfined \
                    --security-opt apparmor=unconfined \
                    -v $HOME/.docker:/root/.docker \# mount Docker credentials
                    -v ${{ github.workspace }}/repo:/repo
           run: |
             cd ./repo
-
             # Build and push images to all registries
             buildctl build \
               --frontend dockerfile.v0 \
