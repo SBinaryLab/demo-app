@@ -64,7 +64,7 @@ jobs:
 
       # 5️⃣ Build and Push Images in rootless BuildKit container
       - name: Build and Push Images
-        uses: addnab/docker-run-action@v4
+        uses: addnab/docker-run-action@v3
         with:
           image: moby/buildkit:rootless
           options: --rm \
