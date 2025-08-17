@@ -64,7 +64,7 @@ jobs:
 
       # 5️⃣ Build and Push Images in rootless BuildKit container
       - name: Build and Push Images
-        uses: addnab/docker-run-action@v3
+        uses: addnab/docker-run-action@v4
         with:
           image: moby/buildkit:rootless
           options: >
@@ -83,3 +83,4 @@ jobs:
               --output type=image,name=${IMAGE_NAME_DOCKER}:latest,push=true
               # --output type=image,name=${IMAGE_NAME_GHCR}:latest,push=true \
               # --output type=image,name=${IMAGE_NAME_GITLAB}:latest,push=true
+          shell: sh
