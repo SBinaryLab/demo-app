@@ -9,49 +9,78 @@ env:
   DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_USERNAME }}
   DOCKER_HUB_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
   REGISTRY_GHCR: ghcr.io
+  REGISTRY_GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
   REGISTRY_GITLAB: registry.gitlab.com
+  REGISTRY_GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
   IMAGE_NAME_DOCKER: ${{ secrets.DOCKER_USERNAME }}/demo-app
   IMAGE_NAME_GHCR: ghcr.io/${{ github.repository }}/demo-app
   IMAGE_NAME_GITLAB: registry.gitlab.com/${{ github.repository }}/demo-app
 
 jobs:
-  build-push:
+  checkout:
     runs-on: ubuntu-latest
+    outputs:
+      repo-path: ${{ steps.upload-artifact.outputs.repo-path }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Run BuildKit container to build images
+      - name: Upload repository as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: repo
+          path: .
+
+  build-push:
+    runs-on: ubuntu-latest
+    needs: checkout
+    steps:
+      - name: Download repository artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: repo
+          path: ./repo
+
+      - name: Build and Push Images using BuildKit rootless
         uses: addnab/docker-run-action@v3
         with:
           image: moby/buildkit:rootless
-          options: >
-            --rm
-            --security-opt seccomp=unconfined
-            --security-opt apparmor=unconfined
-            -v ${{ github.workspace }}:/repo
+          options: -v ${{ github.workspace }}/repo:/repo --rm
           run: |
-            export BUILDKITD_FLAGS="--allow-insecure-entitlement security.insecure"
-            
-            # Start rootless buildkitd
-            buildkitd-rootless.sh &
-            sleep 5  # give it a few seconds to start
-
             cd /repo
 
-            # Optional: write Dockerfile from secret
             echo "${{ secrets.DOCKERFILE_DEMO_APP }}" > Dockerfile
+            
+            # Start BuildKit rootless daemon
+            buildkitd --rootless &
+            sleep 3
 
-            # Login to Docker registries
-            buildctl login docker.io --username $DOCKER_HUB_USERNAME --password $DOCKER_HUB_PASSWORD
-            # buildctl login ghcr.io --username $GITHUB_ACTOR --password ${{ secrets.GITHUB_TOKEN }}
-            # buildctl login registry.gitlab.com --username ${{ secrets.GITLAB_USER }} --password ${{ secrets.GITLAB_TOKEN }}
+            # Docker Hub login
+            buildctl login docker.io --username "${DOCKER_HUB_USERNAME}" --password "${DOCKER_HUB_PASSWORD}"
 
-            # Build and push Docker images
+            # # GHCR login
+            # buildctl login ghcr.io --username "${{ github.actor }}" --password "${REGISTRY_GHCR_TOKEN}"
+
+            # # GitLab login
+            # buildctl login registry.gitlab.com --username "${{ github.actor }}" --password "${REGISTRY_GITLAB_TOKEN}"
+
+            # Build and push Docker Hub image
             buildctl build \
               --frontend dockerfile.v0 \
               --local context=. \
               --local dockerfile=. \
-              --output type=image,name=$IMAGE_NAME_DOCKER:latest,push=true 
-              # --output type=image,name=$IMAGE_NAME_GHCR:latest,push=true \
-              # --output type=image,name=$IMAGE_NAME_GITLAB:latest,push=true
+              --output type=image,name=${IMAGE_NAME_DOCKER}:latest,push=true
+
+            # # Build and push GHCR image
+            # buildctl build \
+            #   --frontend dockerfile.v0 \
+            #   --local context=. \
+            #   --local dockerfile=. \
+            #   --output type=image,name=${IMAGE_NAME_GHCR}:latest,push=true
+
+            # # Build and push GitLab CR image
+            # buildctl build \
+            #   --frontend dockerfile.v0 \
+            #   --local context=. \
+            #   --local dockerfile=. \
+            #   --output type=image,name=${IMAGE_NAME_GITLAB}:latest,push=true
