@@ -22,7 +22,6 @@ jobs:
       - name: Create Dockerfile
         run: |
           echo "${{ secrets.DOCKERFILE_DEMO_APP }}" > Dockerfile
-          cat Dockerfile
 
       # 3️⃣ Set up Buildx (rootless BuildKit)
       - name: Set up Docker Buildx
