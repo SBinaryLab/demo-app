@@ -68,9 +68,7 @@ jobs:
         with:
           image: moby/buildkit:rootless
           options: >
-                   --rm \
-                   --security-opt seccomp=unconfined 
-                   --security-opt apparmor=unconfined 
+                   --rm
                    -v $HOME/.docker:/root/.docker # mount Docker credentials
                    -v ${{ github.workspace }}/repo:/repo
           run: |
