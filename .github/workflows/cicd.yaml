@@ -54,20 +54,20 @@ jobs:
       #     username: ${{ secrets.GITLAB_USERNAME }}
       #     password: ${{ secrets.GITLAB_TOKEN }}
 
-      - name: Write Dockerfile from Secret
-        run: |
-          echo "${{ secrets.DOCKERFILE_CONTENT }}" > Dockerfile
+      # - name: Write Dockerfile from Secret
+      #   run: |
+      #     echo "${{ secrets.DOCKERFILE_CONTENT }}" > Dockerfile
 
-      - name: Build and push image to Docker Hub with BuildKit
-        run: |
-          docker buildx build \
-            --platform linux/amd64 \
-            --tag ${{ env.IMAGE_NAME_DOCKER }}:${{ github.sha }} \
-            --tag ${{ env.IMAGE_NAME_DOCKER }}:latest \
-            --push \
-            --build-arg BUILDKIT_INLINE_CACHE=1 \
-            --security-opt seccomp=unconfined \
-            .
+      # - name: Build and push image to Docker Hub with BuildKit
+      #   run: |
+      #     docker buildx build \
+      #       --platform linux/amd64 \
+      #       --tag ${{ env.IMAGE_NAME_DOCKER }}:${{ github.sha }} \
+      #       --tag ${{ env.IMAGE_NAME_DOCKER }}:latest \
+      #       --push \
+      #       --build-arg BUILDKIT_INLINE_CACHE=1 \
+      #       --security-opt seccomp=unconfined \
+      #       .
 
       # - name: Build and push image to GHCR with BuildKit
       #   run: |
